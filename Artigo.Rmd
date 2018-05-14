@@ -1,0 +1,96 @@
+---
+title: "Artigo Macroeconometria"
+author: "Leonardo Frota"
+date: "5 de maio de 2018"
+output: pdf_document
+---
+# Artigo Isso aqui é um mundo uma provocação.
+
+## Chamando os pacotes.
+
+```{r}
+install.packages("sde", repos="http://R-Forge.R-project.org")
+library(sde)
+
+```
+
+
+Literatura:
+An application of Ornstein-Uhlenbeck process to commodity pricing in Thailand
+http://math.univ-angers.fr/publications/prepub/fichiers/00229.pdf
+http://www1.maths.ox.ac.uk/system/files/attachments/Thierfelder_v1.08.pdf
+http://www.math.ku.dk/~susanne/StatDiff/Overheads1b
+
+Simulation and inference for stochastic differential equations.
+
+#Generalidades de um processo estocástisco
+
+Seja $(w,A,P)$ um espaço de probabilidades.
+
+
+# Equações diferenciais estocásticas
+
+As soluções para as equações diferenciais estocasticas da forma:
+
+$dX(t) = b(t,X(t))dt + \sigma(t,X(t))dW(t)$  (1)
+
+com alguma condição inicial $X(0)$.
+
+são chamadas de processo de difusão.
+
+De forma usual, a equação acima pode ser interpretada no sentido de Ito,i.e.:
+
+
+
+A condição inicial pode ser aleatória ou não. Se aleatória, X(0) = Z, ela deve ser independente da $\sigma-algebra$ gerada por W e satisfazer a condição $\mathbb{E}|Z|^2<\infty$. As duas funções deterministicas b(.;.) e $\sigma^2(.;.)$ são chamadas respectivamente de coeficientes de drift  e de difusão da equação diferencial estocástica (1). 
+
+
+#Processo Ornstein-Uhlenbeck
+
+The Ornstein–Uhlenbeck process is one of several approaches used to model (with modifications) interest rates, currency exchange rates, and commodity prices stochastically. The parameter $\mu$  represents the equilibrium or mean value supported by fundamentals;  $\sigma$  the degree of volatility around it caused by shocks, and $\theta$  the rate by which these shocks dissipate and the variable reverts towards the mean. 
+fonte: Wikipedia
+
+$dX_{t} = -\beta(X_{t} - \alpha)dt + \sigma dW_{t}$
+
+$onde \beta >0, \alpha \in \mathbb{R}, \sigma > 0 e X_{o} = x_{o}$
+
+Interpretação dos parâmetros:
+
+$\beta$: quão forte o sistema reage a perturbações ( a taxa de decaimento ou crescimento)
+
+$\sigma^{2}$: a variação no tamanho do "ruído"
+
+$\alpha$: a média assintótica
+
+
+Ideia do artigo:
+
+i) Fazer algum modelo teórico pra explicar qualquer coisa que encaixe nessa equação ai hahahaha.... ai simular.
+
+ii) pegar algum ativo brasileiro: commodity, cambio ou taxa de juros. Usar a série histórica e calcular os fundamentos - que vai dar a media assintotica. Simular o modelo e depois comparar com fatos estilizados. Calibrar o modelo denovo e etc...
+
+Os códigos tão aqui. Tem pacote no R e um livro explicando. Só vai ter uma malhação pra entender.
+
+## Ornstein-Uhlenbeck process
+
+Código 
+
+```{r}
+set.seed(123)
+d <- expression(-5 * x)
+s <- expression(3.5)
+X <- sde.sim(X0=10,drift=d, sigma=s)
+plot(X,main="Ornstein-Uhlenbeck")
+
+```
+
+## Multiple trajectories of the O-U process
+
+```{r}
+
+set.seed(123)
+sde.sim(X0=10,drift=d, sigma=s, M=3) -> X
+plot(X,main="Multiple trajectories of O-U")
+
+```
+
