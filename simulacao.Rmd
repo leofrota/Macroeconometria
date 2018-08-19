@@ -1,0 +1,344 @@
+---
+title: "simula"
+author: "Leonardo Frota"
+date: "3 de agosto de 2018"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+````{r}
+library(Quandl)
+library(stargazer)
+library(ggplot2)
+
+
+soja = Quandl("CEPEA/SOYBEAN")
+soja[,1] <- as.Date(soja[,1], format = "%d/%m/%Y")
+head(soja)
+plot(soja$`Price US$`)
+laranja = Quandl("CEPEA/CITRUS_T")
+milho = Quandl("CEPEA/CORN")
+
+y <- apply(soja,2,function(x) {summary(x)})
+stargazer(y)
+z <- apply(laranja,2,function(x) {summary(x)})
+stargazer(z)
+w <- apply(milho,2,function(x) {summary(x)})
+stargazer(w)
+
+ggplot() + 
+  geom_line(data = soja, aes(x = soja$Date, y = soja$`Price US$`), color = "red") +
+  geom_line(data = laranja, aes(x = laranja$Date, y = laranja$`Term price US$/40.8kg box`), color = "yellow") +
+ geom_line(data = milho, aes(x = milho$Date, y = milho$`Cash Price US$`), color = "blue") + 
+ xlab('data') +
+  ylab('preço')
+
+```` 
+
+
+
+
+````{r}
+
+# function for Calibration using Maximum Likelihood estimates
+ouFit.ML = function(spread) {
+    n = length(spread)
+    delta = 1  # delta
+    Sx = sum(spread[1:n - 1])
+    Sy = sum(spread[2:n])
+    Sxx = sum((spread[1:n - 1])^2)
+    Syy = sum((spread[2:n])^2)
+    Sxy = sum((spread[1:n - 1]) * (spread[2:n]))
+    mu = (Sy * Sxx - Sx * Sxy)/((n - 1) * (Sxx - Sxy) - (Sx^2 - Sx * Sy))
+    theta = -log((Sxy - mu * Sx - mu * Sy + (n - 1) * mu^2)/(Sxx - 2 * mu * 
+        Sx + (n - 1) * mu^2))/delta
+    a = exp(-theta * delta)
+    sigmah2 = (Syy - 2 * a * Sxy + a^2 * Sxx - 2 * mu * (1 - a) * (Sy - a * 
+        Sx) + (n - 1) * mu^2 * (1 - a)^2)/(n - 1)
+    sigma = sqrt((sigmah2) * 2 * theta/(1 - a^2))
+    theta = list(theta = theta, mu = mu, sigma = sigma, sigmah2 = sigmah2)
+    return(theta)
+}
+
+# Calculando os parâmetros para a soja
+
+sojavetor <- as.vector(soja[,2])
+head(sojavetor)
+ouFit.ML(sojavetor)
+parametrossoja <- c(ouFit.ML(sojavetor)[[1]], ouFit.ML(sojavetor)[[2]], ouFit.ML(sojavetor)[[3]])
+
+#Calculando os parametros para o milho
+
+milhovetor <- as.vector(milho[,2])
+head(milhovetor)
+ouFit.ML(milhovetor)
+parametrosmilho <- c(ouFit.ML(milhovetor)[[1]], ouFit.ML(milhovetor)[[2]], ouFit.ML(milhovetor)[[3]])
+
+
+# Calculando os parametros para a laranja
+
+laranjavetor <- as.vector(laranja[,2])
+head(laranjavetor)
+ouFit.ML(laranjavetor)
+parametroslaranja <- c(ouFit.ML(laranjavetor)[[1]], ouFit.ML(laranjavetor)[[2]], ouFit.ML(laranjavetor)[[3]])
+
+
+
+
+````
+
+````{r}
+
+# Simple mean-reverting process:% dx = nu (xbar - x) dt + sigma dz
+
+# generate a function for simulation
+OU.sim <- function(para = c(0.01, 200, 1), x0= 1, periods=100){
+#  periods=100; #Number of periods
+
+theta = para[1]; # speed of reversion
+
+mu = para[2]; #long term mean
+
+sigma = para[3]; # sigma in monthly terms
+
+# theta = 1
+
+sigma2 = sigma * sqrt((1-exp(-2*theta))/(2*theta));   # dt=1;
+
+
+x= as.vector(rep(0, periods))  # all zero, 100 vector
+
+
+epsilon=rnorm(periods)
+x[1]= mu; # Starting value of first row of x
+
+
+for (i in 2:periods){
+  x[i] = x[i-1] + mu*(1-exp(-theta)) + x[i-1]*(exp(-theta)-1) + sigma2*epsilon[i-1];
+}
+
+return(x) 
+
+}
+
+simsoja <- OU.sim(para = parametrossoja, x0 = 220)
+plot(simsoja)
+
+simmilho <- OU.sim(para = parametrosmilho, x0 = 220)
+plot(simmilho)
+
+simlaranja <- OU.sim(para = parametroslaranja, x0 = 220)
+plot(simlaranja)
+
+
+trajetosoja <- as.data.frame(simsoja)
+indice <- c(1:100)
+trajetosojaa <- cbind(trajetosoja,indice)
+
+
+trajetomilho <- as.data.frame(simmilho)
+indice <- c(1:100)
+trajetomilhoo <- cbind(trajetomilho,indice)
+
+
+trajetolaranja <- as.data.frame(simlaranja)
+indice <- c(1:100)
+trajetolaranjaa <- cbind(trajetolaranja,indice)
+
+trajetos <- cbind(trajetolaranjaa,trajetomilhoo,trajetosojaa)
+
+library(reshape2)
+
+trajeto <- reshape2::melt(trajetos, id.var = "indice")
+
+ggplot(trajeto, aes( x = trajeto$indice, y = trajeto$value, color = factor(trajeto$variable)))+geom_line() + theme_minimal() + labs(x = "Tempo", y = "Preço", color = "Commodity")
+ 
+
+````
+
+````{r}
+
+library(yuima)
+
+grid = setSampling(Terminal = 1, n = 1000)
+m1 = setModel(drift = "theta*(mu-x)", diffusion = "sigma", state.var = "x", 
+    time.var = "t", solve.var = "x", xinit = 21.65)
+
+Xsoja = simulate(m1, true.param = list(mu = 22.66, sigma = 1.00,  theta = ouFit.ML(sojavetor)[[1]]), sampling = grid)
+
+
+simnum = 1000
+dist = c(0.05 ,0.10, 0.25,0.50, 0.75, 0.90, 0.95)
+newsim = function(i) {
+    simulate(m1, true.param = list(mu = 22.66, sigma = 1.00, 
+        theta = ouFit.ML(sojavetor)[[1]]))@data@original.data
+}
+
+# newsim(1) simulation 1000 times, each time there are 100 time periods
+sim = sapply(1:simnum, function(x) newsim(x))
+# transfor to time seires format.
+m2 = t(sim)
+
+msoja <- apply(m2, 2, function(x){summary(x)})
+
+stargazer(msoja)
+
+# plot the mean of the 1000 time simulation for the 100 time periods
+plot(msoja, type = "l")
+
+
+# find out the quantile to decribe the distribution
+tile = sapply(1:100, function(x) quantile(m2[, x], dist))
+tile
+
+#grafico previsão
+
+sojaprevisao <- as.data.frame(msoja) 
+
+#Chamando a base
+
+
+library(readxl)
+previsaosoja <- read_excel("C:/Users/Leonardo/Desktop/previsaosoja.xls")
+View(previsaosoja)
+
+
+#Monte Carlo
+
+ggplot(data = previsaosoja, aes(x = previsaosoja$AcumuladoVB))+geom_density(alpha=.7, fill = "royalblue2") + theme_minimal() + labs(x = "Preço Soja", y = "Densidade",  title = " Simulação de Monte Carlo", subtitle = "Distribuição de Frequência das Previsões") + scale_fill_hue(c=45,l=50)
+
+# Monte Carlos dois cenarios
+
+
+ggplot(data = previsaosoja, aes(x = previsaosoja$AcumuladoVB))+geom_density(alpha=.7, fill = "royalblue2") + geom_density(data = previsaosoja, aes(x=previsaosoja$AcumuladoVA),   alpha=.7, fill= "indianred3") + theme_minimal() + labs(x = "Preço Soja", y = "Densidade",  title = " Simulação de Monte Carlo", subtitle = "Distribuição de Frequência das Previsões") + scale_fill_hue(c=45,l=25)
+  
+
+````
+
+
+````{r}
+#Previsão do Milho
+
+m1 = setModel(drift = "theta*(mu-x)", diffusion = "sigma", state.var = "x", 
+    time.var = "t", solve.var = "x", xinit = ouFit.ML(milhovetor)[[2]])
+
+xmilho = simulate(m1, true.param = list(mu = ouFit.ML(milhovetor)[[2]], sigma = 3.0,  theta = ouFit.ML(milhovetor)[[1]]), sampling = grid)
+
+
+simnum = 1000
+# specific qunatile (which we can pick any another quantile)
+dist = c(0.05,0.10,0.25, 0.50, 0.75, 0.9, 0.95)
+newsim = function(i) {
+    simulate(m1, true.param = list(mu = ouFit.ML(milhovetor)[[2]], sigma = 3.0, 
+        theta = ouFit.ML(milhovetor)[[1]]))@data@original.data
+}
+# newsim(1) simulation 1000 times, each time there are 100 time periods
+sim = sapply(1:simnum, function(x) newsim(x))
+# transfor to time seires format.
+m2 = t(sim)
+
+
+mmilho <- apply(m2, 2, function(x){summary(x)})
+
+stargazer(mmilho)
+
+
+# plot the mean of the 1000 time simulation for the 100 time periods
+plot(mmilho, type = "l") 
+
+
+# find out the quantile to decribe the distribution
+tile = sapply(1:100, function(x) quantile(m2[, x], dist))
+tile
+
+
+#grafico previsão
+
+milhoprevisao <- as.data.frame(mmilho) 
+
+#Chamando a base
+
+library(readxl)
+previsaomilho <- read_excel("C:/Users/Leonardo/Desktop/previsaomilho.xls")
+View(previsaomilho)
+
+#Histograma das previsões
+
+#Monte Carlo
+
+ggplot(data = previsaomilho, aes(x = previsaomilho$AcumuladoVB))+geom_density(alpha=.7, fill = "palegreen") + theme_minimal() + labs(x = "Preço Milho", y = "Densidade",  title = " Simulação de Monte Carlo", subtitle = "Distribuição de Frequência das Previsões") + scale_fill_hue(c=45,l=50)
+
+# Monte Carlos dois cenarios
+
+
+ggplot(data = previsaomilho, aes(x = previsaomilho$AcumuladoVB))+geom_density(alpha=.7, fill = "palegreen") + geom_density(data = previsaomilho, aes(x=previsaomilho$AcumuladoVA),   alpha=.7, fill= "palevioletred") + theme_minimal() + labs(x = "Preço Milho", y = "Densidade",  title = " Simulação de Monte Carlo", subtitle = "Distribuição de Frequência das Previsões") + scale_fill_hue(c=45,l=25)
+
+
+````
+
+
+````{r}
+
+#Simulação Laranja
+
+m1 = setModel(drift = "theta*(mu-x)", diffusion = "sigma", state.var = "x", 
+    time.var = "t", solve.var = "x", xinit = ouFit.ML(laranjavetor)[[2]])
+
+xlaranja = simulate(m1, true.param = list(mu = ouFit.ML(laranjavetor)[[2]], sigma = 1.5,  theta = ouFit.ML(laranjavetor)[[1]]), sampling = grid)
+
+plot(xlaranja)
+
+simnum = 1000
+# specific qunatile (which we can pick any another quantile)
+dist = c(0.05, 0.10,0.25,0.5, 0.75, 0.9, 0.95)
+newsim = function(i) {
+    simulate(m1, true.param = list(mu = ouFit.ML(laranjavetor)[[2]], sigma = 1.5, 
+        theta = ouFit.ML(laranjavetor)[[1]]))@data@original.data
+}
+# newsim(1) simulation 1000 times, each time there are 100 time periods
+sim = sapply(1:simnum, function(x) newsim(x))
+# transfor to time seires format.
+m2 = t(sim)
+
+mlaranja <- apply(m2, 2, function(x){summary(x)})
+
+stargazer(mlaranja)
+
+
+# plot the mean of the 1000 time simulation for the 100 time periods
+plot(mlaranja, type = "l")
+
+
+# find out the quantile to decribe the distribution
+tile = sapply(1:100, function(x) quantile(m2[, x], dist))
+tile
+
+
+#grafico previsão
+
+laranjaprevisao <- as.data.frame(mlaranja) 
+
+library(readxl)
+previsaolaranja <- read_excel("C:/Users/Leonardo/Desktop/previsaolaranja.xls")
+View(previsaolaranja)
+
+#Histograma das previsões
+
+#Monte Carlo
+
+ggplot(data = previsaolaranja, aes(x = previsaolaranja$AcumuladoVB))+geom_density(alpha=.7, fill = "lightgoldenrod2") + theme_minimal() + labs(x = "Preço Laranja", y = "Densidade",  title = " Simulação de Monte Carlo", subtitle = "Distribuição de Frequência das Previsões") + scale_fill_hue(c=45,l=50)
+
+# Monte Carlos dois cenarios
+
+
+ggplot(data = previsaolaranja, aes(x = previsaolaranja$AcumuladoVB))+geom_density(alpha=.7, fill = "lightgoldenrod2") + geom_density(data = previsaolaranja, aes(x=previsaolaranja$AcumuladoVA),   alpha=.7, fill= "palevioletred") + theme_minimal() + labs(x = "Preço Laranja", y = "Densidade",  title = " Simulação de Monte Carlo", subtitle = "Distribuição de Frequência das Previsões") + scale_fill_hue(c=45,l=25)
+
+
+
+
+````
