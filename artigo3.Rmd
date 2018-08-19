@@ -1,0 +1,418 @@
+---
+title: "artigo3"
+author: "Leonardo Frota"
+date: "21 de julho de 2018"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+# Processo Ornstein - Uhlenbeck: Uma aplicação a precificação de commodities agrícolas no Brasil
+
+## Introdução.
+
+O Mercado das commodities tem experimentando em anos recentes um crescimento substantial no volume de transações e na variedade de seus contratos . Os participantes desse Mercado tambem tem se tornado mais sofisticados no reconhecimento e no exercicio de operações em contratos derivativos. Por esses motivos, há um crescent interesse na modelagem e precificação de ativos relacionados a commodities. 
+ No contexto da crescente importancia do Agronegócio na composição do produto interno bruto brasileiro, a compreensão do funcionamento dos derivativos das principais commodities negociadas na B3 – Bolsa de mercados futuros e Ibovespa – é um tema de substantial relevancia para os agentes desse Mercado. Uma aborgadem que tem ganhado relevo na literatura aplicada sobre o tema é a utilização de equações diferenciais estocasticas como ferramenta para descrever os principais fatos estilizados subjacentes a esses series financeiras.
+Desse modo, o presente artigo é uma contribuição para o entendimento de como se comportam as series financeiras das principais commodities agrícolas negociadas no Mercado de futuros brasileiro – soja, café e milho -  através da modelagem destas séries pelo método de equações diferenciais estocásticas – em particular, através do método de Ornstein-Uhlenbeck.
+
+
+Dessa forma, o presente artigo está organizado da seguinte forma: a seção esboça uma discussão sobre equações diferenciais estocasticas; a seção apresenta uma breve revisão de literatura empirica sobre o tema; a seção discute a base de dados utilizada; a seção apresenta o modelo analitico a ser utilizado na simulação; a seção apresenta os resultados da simulação; a seção discute os resultados simulados a luz dos fatos empiricos e a seção conclui.
+
+
+## Revisão de Equações diferenciais Estocásticas
+
+A presente seção apresentará uma breve descrição dos principais conceitos utilizados nos modelos teóricos de equações diferenciais estocásticas. Ela foi estruturada de forma a fornecer uma introdução breve e auto-contida da construção da teoria das equações diferencias estocásticas no contexto da modelagem das séries financeiras. \footnote{para um tratamento mais extenso ver Stochastic Differential equations an introduction with applications}
+
+Uma equação diferencial estocástica é um tipo de função que ao contrário das equações diferenciais ordinárias é não determinística. Assim, a equação que nós obtemos ao permitir a aleatoriedade nos coeficientes de uma equação diferencial é chamada uma equação diferencial estocastica. É claro que qualquer solução para uma equação diferencial estocastica deve envolver alguma aleatoriedade - só podemos dizer algo sobre a distribuição da probabilidade das distribuições.
+
+Desse modo, as soluções não serão apenas elementos de um conjunto deterministico, mas terão também propriedades estocásticas que devem ser compreendidas para se chegar numa solução desses modelos. Assim, em primeiro lugar, deve-se entender as propriedades do que se chama de processo estocástico.
+
+
+#Processo estocástisco
+
+Para entender o tipo de problema endereçado pelos modelos que iremos apresentar nessa seção, vamos ilustrar um problema típico do mundo financeiro.
+Imaginamos que a taxa de cambio entre real e dolár a cada instante fixo t entre 11:00 e 12:00 é aleatória. Portanto, nós podemos interpreta-lo como uma realização $X_{t}(w)$ de uma variável aleatória $X_{t}$, e então observamos $X_{t}(w)$, $9 \leq t \leq 10$. Para fazer uma previsão as 12:00 sobre a taxa de cambio as 13:00 é razoável olhar para toda a evolução de $X_{t}(w)$ entre as 11:00 e as 12:00. A classe de modelos matemáticos utilizadas para descrever esse fenomeno chama-se de processos estocásticos. (Mikosch, 1998)
+
+Formalmente, seguindo a construção de (Iacus,2008) seja $(w,A,P)$ um espaço de probabilidades. Um processo estocástico de valores reais é uma família de variáveis aleatórias ${X_{\gamma}, \gamma\in\Gamma}$ definida em $\Omega \times \Gamma$ tomando valores em $\mathbb{R}$. Portanto, as variáveis aleatórias da família - mensuráveis para todo $\gamma \in\Gamma$ - são funções da forma:
+
+\[X(\gamma,\omega): \Gamma\times\Omega \rightarrow \mathbb{R} \ \ (1) \]
+
+Para $\Gamma=\mathbb{N}$, nós temos um processo em tempo discreto e para $\Gamma\subset\mathbb{R}$ nós temos um processo em tempo contínuo. Estamos interessados em processos de tempo contínuo com $\Gamma=[0,\infty)$ e pensaremos em $[0,\infty)$ como o eixo temporal. Denotaremos o processo estocástico em tempo contínuo como $X = {X_{t},t \geq 0}$. Para evitar subscritos múltiplos usaremos a notação usual X(t) para denotar $X_{t}$. Para um valor fixo de $\omega$, por exemplo $\bar{omega}$, ${X(t,\bar{omega}),t\geq 0}$ (respectivamente ${X(n,\bar{omega})n,\in\mathbb{N}}$ para o caso discreto) é chamado de caminho ou trajetória do processo e representa uma evolução possível para o processo. Para um valor fixo  de $t$, por exemplo, $\bar{t}$, o conjunto de valores $[X(\bar{t},\omega),\omega\in\Omega]$  (respectivamente ${X(\bar{n},\omega)\omega,\in\mathbb{\Omega}}$ para o caso discreto) representa o conjunto de estados possíveis para o processo no tempo $\bar{t}$ (respectivamente, n).
+
+
+Considere então um espaço de probabilidades $(\Omega,A,P)$ como definido acima.
+Uma filtração ${F_{t}, t \geq 0}$ é uma família crescente de $sub-\sigma-algebras$ \footnote{Seja X um conjunto. Então uma $\sigma-algebra$ F é uma coleção não vazia de subconjuntos de X de modo que: i) X está em F; ii) Se A está em F, então o complemento de A também está; e iii) se $A_{n}$ é uma sequencia de elementos de F, então a união dos $A_{n}$ está em c, 2nd ed. Berlin: Springer-Verlag, p. 494, 1997.} de A indexadas por $t\geq 0$ i.e; para cada s, $t\geq 0$ tal que $s < t$, nós temos $F_{s} \subset F_{t}$ com $F_{0} = {\Omega, \emptyset}$. Para cada processo ${X(t),t \geq 0}$ e para cada t, nós podemos associar uma $\sigma-algebra$ denotada por $F_{t} = \sigma(X(s);0\leq s \leq t)$ que é a $\sigma-algebra$ gerada pelo processo X até o tempo t; i.e. a menor $\sigma-algebra$ de A que torna $X(s,\omega)$ mensurável para todo $0 \leq s \leq t$. Essa $\sigma-algebra$ é o menor conjunto dos subconjuntos de $\Omega$ que tornam possível assinalar probabilidades para todos os eventos relacionados ao processo X até o tempo t.
+
+Mais intuitivamente, na teoria dos processos estocásticos, uma filtração associada a um processo estocástico é - também conhecida como filtração natural - é aquela associada ao processo que grava seu comportamento passado em cada tempo t. É nesse sentido a filtração mais simples para estudar um dado processo: toda a informação referente a esse processo, e apenas essa informação, está disponível na filtração natural (fonte)
+
+Por fim, dado um processo estocástico, $X_{t}$, $t \geq 0$ e uma filtração $F_{t}$, t $\geq 0$ (não necessariamente aquele gerado por X), o processo de X é dito adptável para $F_{t}$, $t\geq 0$ se para todo $t\geq 0$, $X(t)$ é $F_{t}$ mensurável.
+
+Definidos os aspectos formais de existencia dos conjuntos associados a espaços de probabilidades e processos estocásticos, é útil definir os momentos da distribuição desses processos.
+
+#Momentos, covariancia e incrementos do processo estocástico
+
+O valor esperado e a variancia de um processo estocastico são definidos como:
+
+\[\mathbb{E}X_{t} = \int_{\Omega}X(t,\omega)\mathbb{d}P(\omega), \ \ t\in[0,T] \ \ \ (2)\]
+
+e
+
+\[VarX_{t} = \mathbb{E}(X_{t} - \mathbb{E}X_{t})^2, t\in[0,T] \ \ \ \ (3)\]
+
+O k-ésimo momento de $X_{t}$, $k\geq 1$ é definido como, para todo $t\in[0,T]$, como $\mathbb{E}X^k_{t}$. Essas quantidades são bem definidas quando as integrais correspondentes são finitas. A função de covariancia do processo para dois valores de tempo, s e t, é definida como:
+
+\[Cov(X_{s};X_{t}) = \mathbb{E}{(X_{s} - \mathbb{E}X_{s}(X_{t}-\mathbb{E}X_{t}))} \ \ \ \  (4) \]
+
+A quantidade $X_{t} - X_{s}$ é chamada de incremento do processo de s para t, $s\leq t$. Essas quantidades são uteis na descrição de processos estocásticos que são usualmente introduzidos para modelar a evolução sujeita a choques estocásticos.
+
+Com base nos conceitos apresentados acima, que são as fundações teóricas que permitem o entendimento de um processo estocástico, é relevante apresentar o modelo matemático que inaugurou a literatura sobre modelagem financeira utilizando equações diferencias estócasticas, a saber, o movimento browniano.  
+
+#Movimento Browniano
+
+O processo estocástico que deu origem aos conceitos de integração estocástica e que eventualmente iria tornar-se fundamental para a modelagem de equações diferenciais estocaticas em finanças foi o que é chamado de movimento Browniano.\footnote{"The history of stochastic integration and the modelling of risky asset prices both begin with Brownian motion"" A short history of stochastic integration and mathematical finance: The early years, 1880–1970}
+
+Um processo estocástico $W=(W_{t}, t\in[0,\infty))$ é chamado um movimento browniano ou um processo de Wierner, segundo (Mikosch,1998) se as seguintes condições são satisfeitas: i) ele começa em zero, $W_{0} = 0$; ii) tem incrementos estacionários e independentes; iii) para $t > 0$, $W_{t}$ tem uma distribuição normal N(0,t); iv) tem caminhos amostrais contínuos. 
+
+
+Uma vez descritas as principais características do movimento browniano - no contexto da evolução das ideais de equações diferenciais estocásticas - é natural que se apresente em seguida o conceito de integração estocástica.
+
+#Integrais Estocasticas 
+
+Integrais estocásticas e, em particular, as integrais de Ito são naturalmente introduzidas para definir corretamente uma equação diferencial estocastica (Ito,1973).
+
+Aqui, vamos utilizar a construção de  (Iacus,2009), para apresentar o conceito de integral estocástica. Assim, assuma que temos uma quantidade $S(t)$, $t\geq 0 $, que representa o valor de um ativo no tempo t. Considere agora a variação $\Delta S=S(t+\Delta t) - S(t)$ de $S$ em um pequeno intervalo de tempo $[t, t+\Delta t)$. Os retornos do ativo para o qual S é a dinâmica é definida como a razão $\Delta S / S$. Podemos modelar os retornos como 
+
+\[\Delta S / = contribuicao \ deterministica \ + contribuicao \ estocastica\]
+
+A contribuição deterministica pode ser assumida como relacionada a taxa de juros de atividades não arriscadas e portanto  proporcional ao tempo com alguma taxa constante $\mu$, portanto
+
+\[contribuicao \ deterministica = \mu\Delta t\]
+
+A contribuição estocástica é assumida ser relacionada como a variação de alguma fonte de ruído e para a variabilidade natural do mercado (a volatilidade). Denotamos por $\Delta X = X(t + \Delta t) - X(t)$ a variação do processo de ruído (i.e.; os choques) e tornamo-os  proporcionais a volatilidade do mercado $\sigma$; portanto,
+
+\[contribuicao \ estocastica = \sigma\Delta X\]
+
+($\sigma$ pode ser feita como uma função de t e/ou de S). A hipótese natural é assumir o comportamento gaussiano do ruído (i.e., $\Delta X \ ~ \ N(0,1)$)
+que implica que a hipótese de X sendo o processo de Wiener se os choques, em adição, são assumidos independentes. Finalmente, nós temos:
+
+\[\frac{\Delta S}{S} = \mu\Delta t + \sigma\Delta W\]
+
+Agora, a tentação é considerar a equação em diferenças acima para intervalos de tempo infinitesimais (i.e., para $\Delta t \rightarrow 0$) para obter a equação diferencial (estocástica) da forma:
+
+\[\frac{S\prime(t)}{S(t)} = \mu \ + \ \sigma W\prime(t), \ ou \ seja, \ S\prime(t) = \mu S(t) \ + \ \sigma S(t)W\prime(t)\]
+
+podemos escrever em forma diferencial:
+
+\[dS(t) = \mu S(t)dt \ + \ \sigma S(t)dW(t)\]
+
+A equação anterior é um exemplo de uma equação diferencial estocástica, mas infelizmente essa expressão não tem significado matemático, como ja mencionamos na variação do processo de Wierner $dW(t)$ não é finita e o processo de Wiener tem caminhos contínuos mas não diferenciaveis. Para fazer sentido mudamos a equação anterior para sua forma integral:
+
+\[S(t)= S(0) + \mu\int^t_{0} S(u)du \ + \sigma\int^t_{0} S(u)dW(u) \]
+
+Defina a integral estocástica como:
+
+\[I(X) =  \int^T_{0}X(u)dW(u) \]
+
+com relação ao movimento browniano. A definição de $I(X)$ é simples para processos X constantes, mas é complexa para processos genéricos - para uma discussão mais elaborada sobre a construção de integrais estocásticas ver (Ito,1973).
+
+Uma vez definido o conceito de integração estocástica, é relevante apresentar as principais propriedades das integrais estocásticas, uma vez que essas propriedades são muito úteis para facilitar o entendimento das soluções de equações diferencias estocásticas. 
+
+
+Assim, seja ${X_{t}, 0\leq t \leq T}$ um processo estocástico adaptado a filtração generada pelo movimento Browniano e tal que $\int^T_{o}\mathbb{E}(X(s)^2ds < \ + \infty)$. A integral estocástica de X é definida como:
+
+\[I_{t}(X) = \int^t_{0} X_{s}dW_{s} = \lim_{||\Pi_{n}||\rightarrow 0}\sum_{i =o}^{n-1}X(t_{i})(W(t_{i+1}) - W(t_{i}))\]
+
+onde a convergência é em média quadrática \footnote{explicar convergencia em media quadratica} e $t_{i}\in\Pi_{n}$.
+
+Uma classe importante de integração estocástica é a chamada integral de Ito. Assim um processo de Ito ${X_{t}, 0 \leq t \leq T}$ é um processo estocástico que pode ser escrito na forma 
+
+\[X_{t} = X_{0} + \int^t_{0}g(s)ds + \int^t_{0}h(s)dW_{s} \]
+
+onde  $g(t,\omega)$ e $h(t,\omega)$ são dois adaptaveis e funções aleatorias progressivamente mensuráveis tais que:
+
+\[P{\int^T_{0} |g(t,\omega)|dt < \infty} = 1 \ e \ P{\int^T_{0}h(t,\omega)^2dt < \infty} = 1\]
+
+Uma vez apresentadas as principais propriedades a respeito de processos estocásticos e seus conceitos relacionados como integração estocástica e processo de Ito, uma questão fundamental é apresentar as condições que garantam que equações diferenciais estocásticas representando esses processos tenham uma solução.  
+
+#Teorema de Existencia e Unicidade de Soluções para EDS
+
+Esta seção apresenta uma das formulações para o teorema de existencia e unicidade de equações diferencias estocásticas seguindo a construção de (Iacus, 2008)
+
+Antes disso, porém, é necessário apresentar o conceito de processos de difusão.
+Processos de difusão são soluções para equações diferenciais estocástica da forma:
+
+\[dX(t) = b(t, X(t))dt + \sigma(t,X(t))dW(t)\] (1.15)
+
+com alguma condição inicial X(0). A equação acima é interpretada no sentido de integração de Ito:
+
+\[X(t) =  X(0) + \int^T_{0}b(u,X(u))du + \int^T_{0}\sigma(u,X(u))dW(u)\] (1.16)
+
+A condição inicial pode ser aleatória ou não. Se aleatória, digamos X(0) = Z, ela deve ser independente da $\sigma-algebra$ gerada por W e deve satisfazer a condição $\mathbb{E}|Z|^2 < \infty$. As duas funções deterministicas b(.;.) e $\sigma^2(.;.)$ são chamadas de coeficientes de drift e de difusão da equação diferencial estocástica. Elas são assumidas mensuráveis e tais que:
+
+\[P{\int^T_{0} sup_{|x| \geq R} (|b(t,x)| + \sigma^2(t,x))dt < \infty } = 1 \]
+
+para todo $T, R\in[0,\infty)$ porque 1.16 é um processo de Ito.
+
+Assim, as tres principais hipóteses para a construção do teorema estão apresentadas a seguir:
+
+Hipótese 1. Globalmente Lipschitz.  Para todo $x,y \in\mathbb{R}$ e $t\in[0,T]$, existe uma constante $K < +\infty$ tal que:
+
+\[|b(t,x)| - b(t,y)| + |\sigma(t,x) - \sigma(t,y)| < K(x-y)\]
+
+A hipótese do processo ser globalmente lipschitz é intuitivamente semelhante a  continuidade do processo estocástico (De la Fuente, 2005).
+
+Hipótese 2. (Crescimento linear). Para todo $x,y \in\mathbb{R}$ e $t\in[0,T]$ existe uma constante $C < +\infty$ tal que:
+
+\[|b(t,x)| + |\sigma(t,x)| < C(1+|x|)\]
+
+A condição de crescimento linear controla o comportamento da solução de modo que $X_{t}$ não explode em tempo finito.
+
+As hipóteses 1 e 2 levam ao teorema de existencia e unicidade de equações diferenciais estocásticas. Assim:
+
+Teorema. (Existência e Unicidade). Sob as hipótese 1 e 2, a equação diferencial estocástica (1.15) tem uma solução, unica, continua e fortemente adaptável tal que:
+
+\[\mathbb{E}{\int^T_{0}|X_{t}|^2dt}< \infty\]
+
+Demonstração. Ver (Iacus,2009) 
+
+Chamamos o processo X de processo de difusão.  O resultado acima afirma que a solução X é de tipo forte. Isso essencialmente implica a unicidade de caminhos do resultado. Também é possível obter soluções fracas sob diferentes hipóteses. Em muitos casos em estatística, condições para soluções fracas são suficientes porque elas implicam que qualquer duas soluções fracas $X^{(1)}$ e $X^{(2)}$  não são necessariamente identicas pathwise, enquanto suas distribuições são, e isso é o suficiente para inferencia probabilistica.  
+
+
+Neste ponto, cumpre notar que o presente artigo focará na versão homogenea da equação diferencial estocástica com condições iniciais não aleatórias, digamos X(0) = x. Para manter a notação simples, seguiremos a seguinte notação de (Iacus,2009):
+
+\[X_{t} = x + \int^t_{0}b(X_{u})du + \int^t_{0}\sigma(X_{u})dW_{u}\]
+
+e 
+
+\[dX_{t}= b(X_{t})dt + \sigma(X_{t})dW_{t}\]
+
+
+As condições acima podem ser muito restritivas, desse modo,
+em muitos casos, versões locais das mesmas condições são suficientes:
+
+Hipótese 1.3. Localmente Lipschitz. Para qualquer $N < \infty$, $|x|,|y| \leq N$ onde existe uma constante $L_{N} > 0$ tal que 
+
+\[|b(x) - b(y)| + |\sigma(x) - \sigma(y)|\leq L_{n}|x-y|\]
+
+e
+
+ \[2xb(x) + \sigma^2(x) \leq B(1+x^2) \ \  \]
+
+Para a classe de processos de difusão ergodica é em geral verdade que $xb(x) <0$. Portanto, (1.20) é apenas uma condição sobre o crescimento do coeficiente de difusão.
+
+Hipótese 1.4.. Seja b(.) localmente limitada, $\sigma^2(.)$ contínua, e positiva, e para algum A a seguinte condição é valida:
+
+\[xb(x) + \sigma^2(x) \leq A(1+x^2)\]
+
+Proposição.
+
+Sob a hipótese 1.4., a equação diferencial estocástica 1.17 tem solução única.
+
+Demonstração. Ver (Iacus,2009)
+
+
+As hipóteses e teoremas acima estabelecem as condições para a existencia de soluções bem definidas de equações diferencias estocásticas. Uma vez estabelecidas essas condições, é importante, então apresentar ferramentas que permitam a solução dessas equações de modo satisfatório. Nesse contexto, destaca-se a chamada fórmula de Ito (Ito, 1951). 
+
+#Formula de Ito
+
+
+Uma ferramenta importante de calculo estocástico é  a formula de Ito. Essa formula pode ser vista como a versão estocástica da expansão de taylor de f(X) terminada na segunda ordem, onde X é um processo de difusão. O lemma de Ito diz que se f(t,x) é duas vezes diferenciavel em t e x, então:
+
+\[f(t,X_{t}) = f(0,X_{0}) + \int^t_{0}f_{t}(u,X_{u})du + \int^t_{0}f_{x}(u,X_{u})dX_{u} + \frac{1}{2}\int^t_{0}f_{xx}(u,X_{u}(dX_{u})^2)\]
+
+onde 
+
+\[\frac{\partial f(t,x)}{\partial t} = f_{t}(t,x), \frac{\partial f(t,x)}{\partial x} = f_{x}(t,x), \ \ \frac{\partial^2f(t,x)}{\partial x^2} = f_{xx}(t,x)\]
+
+ou, em forma diferencial,
+
+\[df(t,W_{t}) = f_{t}(t,X_{t})dt  + f_{x}(t,X_{t})dX_{t} + \frac{1}{2}f_{xx}(t,X_{t})(dX_{t})^2\]
+
+
+Apesar da aparente simplicidade da formula de Ito, termos como $(dX_{t})^2$ não são facilmente derivados em casos concretos sem algum conhecimento adicional da integral estocástica. Em particular, do ponto de vista de aplicação da formula de Ito, deve se manter em mente que $(dt.dW_{t})$ e $(dt)^2$ são de ordem $O(dt)$, que significa que depois de desenvolver o termo $(dX_{t})^2$, todos os termos da formula pelos quais a parte diferencial é ou $(dt.dW_{t})$ ou $(dt)^2$ pode ser descartada. Além disso, termos da ordem $(dW_{t})^2$ se comportam como dt para as propriedades do movimento browniano.Portanto, a parte diferencial $(dW_{t})^2$ pode ser substituida em toda a parte por dt.
+
+A seguir, então, utilizando os conceitos apresentados nas seções anteriores, vamos apresentar as duas famílias paramétricas mais importantes de processos estocásticos para os interesses do presente artigo. 
+
+# Famílias parametricas de processos estocasticos
+
+A família paramétrica de processo estocastico mais importante no contexto da modelagem financeira é o processo Black-Scholes-Merton que será apresentado a seguir. Depois disso apresentaremos o processo Ornstein-Uhlenbeck, que será utilizado na simulação das séries financeiras desse artigo.
+
+Seja uma equação diferencial estocástica geral:
+
+\[dX_{t} = b(X_{t})dt + \sigma(X_{t})dW_{t}\]
+
+Dependendo do comportamento dos parametros dessa equação geral ela da origem a diferentes familias de processos estocásticos. Em particular, o processo Black-Scholes Merton e o processo Orstein-Uhlenbeck.
+
+O processo Black-Scholes Merton é a solução para a equação diferencial estocastica:
+
+\[dX_{t} = \theta_{1}X_{t}dt + \theta_{2}X_{t}dW_{t} \]
+
+com $\theta_{2} > 0$. O parametro $\theta_{1}$ é interpretado como a taxa de juros constante e $\theta_{2}$ como a volatilidade dos ativos arriscados. A solução explícita é:
+
+\[X_{t} = x_{0}e^{(\theta_{1} - 1/2\theta_{2}^{2})t + \theta_{2}w_{t}}  \]
+
+No contexto da modelagem financeira, o processo Black-Scholes assume que a volatilidade do processo estocástico subjacente é constante (fonte). Em muitos casos, essa hipótese não é valida, em particular, para o tipo de ativos que serão modelados no presente artigo -  as commodities agrícolas. Por esse motivo, iremos apresentar uma familia paramétrica de processos estocástico que apresenta uma alternativa para o Black-Scholes. Esse processo é conhecido como Ornstein-Uhlenbeck. 
+
+O modelo foi originalmente proposto por Ornstein-Uhlenbeck no contexto de modelagem de fenomenos fisicos e então foi adaptado por Vasicek para modelar taxas de juros.
+
+\[dX_{t} = \lambda(\mu - X_{t})dt + \sigma dW_{t}, \]
+
+onde $\sigma$ é interpretado como a volatilidade, $\mu$ é o valor de equilibrio de longo prazo do processo e $\lambda$ é a velocidade de reversão a média.
+
+A seguir, então, tendo em mente a forma funcional do modelo ornstein uhlenbeck, será apresentada uma maneira de discretizar essa equação e assim torna-la apta para a estimação por métodos econométricos (fonte)
+
+Desse modo, seja o modelo Ornstein-Uhlenbeck:
+
+\[dS_{t} = \lambda(\mu - S_{t})dt + \sigma d W_{t}\]
+
+Essa equação diferencial estocastica pode ser discretizada por:
+
+\[S_{t+1} = e^{-\lambda\Delta t}S_{t} + (1 - e^{-\lambda\Delta t})\mu + \sigma\sqrt[]{\frac{(1-e^{-2\lambda\Delta t})}{2\lambda}}\delta W_{t}\]
+
+onde $\Delta t$ é aceitavalmente pequeno e $\Delta w_{t}$ são processos Wiener i.i.d. Podemos usar essa fórmula para simular o valor esperado de longo prazo da commodity.
+
+Podemos estimar essa equação através do metódo de maximaverossimilhança de acordo com Smith (2010).
+
+De posse da estrutura teorica de equações diferencias estocásticas apresentada nas seções anteriores, a próxima seção apresenta uma revisão da literatura aplicada do tema, no contexto da modelagem e precificação de séries financeiras. Na próxima seção, ficara mais evidente o motivo para o destaque dado anteriormente as familias paramétricas black scholes e a ornstein uhlenbeck.
+
+## Revisão da Literatura Empírica
+
+A aplicação mais conhecida de equações diferenciais estocasticas na modelagem de fenomenos financeiros foi elaborada por Black Scholes (1973) no estudo seminal sobre precificação de ativos. Os autores concluem que (...) se as opções são corretamente precificadas no mercado, não deveria ser possível a realização de lucros ao se criar portfolios de posições curtas e longas em opções sobre as ações subjacentes. Usando esse principio, os autores derivam uma formula de valuation teórica para opções.  Como a maior parte dos passivos corporativos podem ser vistos como uma combinações de opções, a fórmula e a analise que leva a sua derivação também são aplicadas a obrigações corporativas como ações comuns, títulos corporativos e garantias. Em particular, a formula pode ser usada para se derivar o desconto que deve ser aplicado a um título corporativo por causa da possibilidade de default.
+
+
+Uma das hipóteses subjacentes ao modelo black scholes é que a volatilidade do processo estocástico é constante, essa hipótese pode ser muito restritiva em alguns casos e por esse motivo pesquisadores buscam classes de modelos alternativas, em especial para a discussão do presente artigo, o modelo Ornstein-Uhlenbeck, originalmente formulado para o contexto de modelagem de fenomenos físicos no trabalho de (Ornstein e Uhlenbeck, 1930).
+
+(Vasicek,1973) aplica o processo ornstein uhlenbeck ao contexto de finanças.
+O autor deriva uma forma geral da estrutura termo da taxa de juros. Sob a hipótese de que a taxa de juros instantânea segue um processo de difusão - ver discussão na revisão teorica; de que  o preço de um título de desconto depende apenas da sua taxa spot sobre o termo; e de que o mercado é eficiente. Sob essas hipóteses, o autor demonstra que a taxa de retorno esperada de qualquer título em excesso a sua taxa spot é proporcional a seu desvio padrão \footnote{A implicação dessas hipóteses é, portanto, que o valor da taxa spot é a única variável estado para toda a estrutura termo. As expectativas formadas com o conhecimento de todo o desenvolvimento passado das taxas de todos os vencimentos, incluindo a estrutura termo presente, são equivalentes a expectativas condicionais apenas ao valor presente da taxa spot. Como existe apenas uma variável estado, os retornos instantaneos dos títulos de diferentes vencimentos são perfeitamente correlacionados. Isso significa que o título de curto prazo e apenas mais um título conseguem representar a totalidade da estrutura termo. No entanto, retornos de títulos sobre um período finito não são perfeitamente correlacionados. Assim, investidores que não estão dispostos a revisar a composição de seus portfolios continuamente irão precisar de um espectro de vencimentos para conseguir seus objetivos de investimento (Vasicek, 1973)}. Essa propriedade é então usada para derivar uma equação diferencial estocastica para preços de títulos, através da classe de modelos Ornstein-Uhlebenck.
+
+A aplicação de (Vasicek, 1973) foi originalmente elaborada para modelar a estrutura termo da taxa de juros, no entanto, a classe de modelos O-U pode ser aplicada em outros contextos. (Nicolato e Venardos, 2003) esboçam uma revisão das possiveis aplicações do modelo O-U. Os autores argumentam que series temporais financeiras de diferentes ativos compartilham de fatos estilizados bem estabelecidos. Esses fatos empíricos são capturados por uma classe de modelos em que a variancia estocastica dos retornos é capturada através de um processo de reversão a média estacionário - i.e. Ornstein-Uhlenbeck. Para ilustrar a performance dessa classe de modelos, os autores utilizam uma base de dados de 87 opções de ações que compoem o índice SP 500. Em geral, os autores reportam que os modelos do tipo O-U demonstram uma boa performance empírica na modelagem desses ativos.
+
+(Chaiyapo e Phewchean, 2017) aplicam o modelo O-U a precificação de commodities na Tailandia. Os autores destacam que uma das caracteristicas relevantes dos preços das commodities é a reversão a media com relação ao mercado de futuros e o spot. No longo prazo, os preços ou retornos voltam a média \footnote{Ver por exemplo (Routledge, Seppi, Spatt, 2000). Os autores destacam que empiricamente as comodities são diferentes de açoes, títulos e outros ativos e alem de comportamento de reversão a média, as commodities tem sazonalidades marcantes em níveis de preço e na volatilidade, além dos preços serem fortemente heterocedásticos.} Daí, a relevância do processo Ornstein Uhlenbeck como ferramenta de modelagem para esses ativos. 
+Em particular, os autores modelam os preços da Tapioca, Arroz e Tabaco. Para a estimação dos parâmetros, os autores utilizaram as técnicas de mínimos quadrados ordinarios, maxima verossimilhança e jackknife. A conclusão dos autores é que o método de estimação jackknife é o mais indicado para a estimação dessa classe de modelos no contexto da precificação de commodities. 
+
+No contexto da literatura brasileira sobre o tema, destaca-se o trabalho de (Pinto, Brandão, 2007) que estudam a precificação e a taxa de conversão da cana de açucar em etanol através de uma metodologia discreta que leva em conta ambos os aspectos de incerteza - a precificação e a conversão - através de uma árvore de decisão que permite o calculo do valor presente da opção de conversão da cana de açucar para o etanol. Essa árvore de decisão é composta de dois processos estocasticos do tipo Ornstein-Uhlenbeck.  Além disso, os autores elaboram um exercício de Monte Carlo que produz resultados análogos ao método de árvore de decisão. 
+
+As proximas seções então, apresentam a parte aplicada do presente trabalho, em primeiro lugar, através da descrição das principais estatísticas relacionadas as base de dados utilizadas.
+
+## Base de Dados e Estatística Descritiva
+
+A presente seção enuncia as base de dados utilizadas na estimação dos parametros, apresenta as principais estatisticas descritivas dos ativos investigados e por fim apresenta uma breve descrição do mercado de derivativos agrícolas no Brasil. 
+
+As informações sobre os preços das commodities agrícolas brasileiras foram retiradas das bases de dados do Centro de Estudos Avançados em Economia Aplicada (Cepea) da Esalq-USP. Em particular, os dados sobre soja são originados de; os dados sobre milho de; e finalmente, os dados sobre café de.
+
+A tabela 1 descreve as estatisticas descritivas mais relevantes dessas tres séries.
+
+````{r}
+library(Quandl)
+library(stargazer)
+library(ggplot2)
+
+
+soja = Quandl("CEPEA/SOYBEAN")
+soja[,1] <- as.Date(soja[,1], format = "%d/%m/%Y")
+head(soja)
+plot(soja$`Price US$`)
+cafe = Quandl("CEPEA/COFFEE_R")
+milho = Quandl("CEPEA/CORN")
+
+y <- apply(soja,2,function(x) {summary(x)})
+stargazer(y)
+z <- apply(cafe,2,function(x) {summary(x)})
+stargazer(z)
+w <- apply(cafe,2,function(x) {summary(x)})
+stargazer(w)
+
+ggplot() + 
+  geom_line(data = soja, aes(x = soja$Date, y = soja$`Price US$`), color = "red") +
+  geom_line(data = cafe, aes(x = cafe$Date, y = cafe$`Cash Price US$`), color = "blue") +
+ geom_line(data = milho, aes(x = milho$Date, y = milho$`Cash Price US$`), color = "yellow") + 
+ xlab('data') +
+  ylab('preço')
+
+````
+
+Optou-se pela utilização das séries em dólar porque, no contexto da escolha de modelagem do presente artigo, não estamos interessados em entender o diferencial entre os preços em dólar e em real causados pela flutuação cambial. (é isso mesmo?)
+
+(Inserir tabela 1)
+
+
+O mercado de futuros da BMF em São Paulo é o quinto maior mercado de futuros do mundo (fonte?)
+Virtualmente sozinho dentre as economias emergentes, o Brasil possui um mercado relativamente grande e bem desenvolvido de mercados futuros que comercializam moedas estrangeiras (FX), contratos de taxas de juros e instrumentos de ação e de commodities. Os contratos de moeda brasileiros e as opções são negociados em moeda doméstica. O mercado de derivativos brasileiro é predominantemente formado por contratos exchange-traded (Upper e Vali, 2016).
+
+Os derivativos de commodities oferecem considerável potencial de crescimento, evidenciado pela produção e exportação de volumes recordes de safra todos os anos (fonte). O relativo pouco uso de derivativos no presente momento tem varios fatores, em particular, a baixa liquidez. A medida que os participantes do mercado tornarem-se mais sofisticados, a liquidez pode aumentar naturalmente, mas isso não deve ser tomado como fato, porque a integração crescente dos produtores aos mercados de derivativos globais pode desviar recursos da BMF. 
+
+Assim, uma vez conhecida as principais características do mercado de derivativos brasileiro e as principais estatísticas descritivas relacionadas a base de dados do presente artigo, as proximas seções irão apresentar o resultado das simulações elaboradas pelos autores e como elas se relacionam com os fatos estilizados das séries históricas.
+
+## Simulação
+
+A presente seção está estruturada da seguinte forma. Primeiro utilizando as séries históricas das commodities escolhidas, são estimados os paramâmetros do modelo O-U. Em seguida, utiliza-se esses parâmetros para simular trajetórias dos ativos escolhidos. Em terceiro lugar, é elaborada uma simulação de monte carlo para descrever o comportamento das trajetorias simuladas dos ativos.
+
+
+## Resultados
+
+
+
+## Conclusão
+
+O presente artigo foi uma tentativa de contribuir para o enriquecimento da literatura sobre a utilização de equações diferenciais estocásticas no contexto da modelagem de ativos financeiros. Em particular, a utilização da classe de modelos Ornstein-Uhlenbeck como ferramenta para a modelagem e precificação de ativos financeiros. 
+
+Em primeiro lugar, foi elaborada uma breve apresentaçãos dos conceitos matemáticos fundamentais que permitem o entendimento das equações diferenciais estocásticas. Em particular, os conceitos de movimento browniano, integração estocástica e lemma de Ito foram explicados.
+
+Em segundo lugar, apresentou-se uma revisão da literatura aplicada sobre o tema (...) 
+
+Em terceiro lugar, foi elaborada uma descrição dos dados utilizados para calibrar a simulação e uma breve apresentação sobre as principais caracteristicas do mercado de derivativos no Brasil.
+
+
+(...)
+
+
+## Referencias Bibliográficas
+
+@incollection{ito1973stochastic,
+  title={Stochastic integration},
+  author={It{\^o}, Kiyosi},
+  booktitle={Vector and Operator Valued Measures and Applications},
+  pages={141--148},
+  year={1973},
+  publisher={Elsevier}
+}
+
+@incollection{jarrow2004short,
+  title={A short history of stochastic integration and mathematical finance: The early years, 1880--1970},
+  author={Jarrow, Robert and Protter, Philip and others},
+  booktitle={A festschrift for Herman Rubin},
+  pages={75--91},
+  year={2004},
+  publisher={Institute of Mathematical Statistics}
+}
+
+@book{iacus2009simulation,
+  title={Simulation and inference for stochastic differential equations: with R examples},
+  author={Iacus, Stefano M},
+  year={2009},
+  publisher={Springer Science \& Business Media}
+}
+
+@article{ito1951formula,
+  title={On a formula concerning stochastic differentials},
+  author={It{\^o}, Kiyosi},
+  journal={Nagoya Mathematical Journal},
+  volume={3},
+  pages={55--65},
+  year={1951},
+  publisher={Cambridge University Press}
+}
+
+@book{mikosch1998elementary,
+  title={Elementary stochastic calculus, with finance in view},
+  author={Mikosch, Thomas},
+  volume={6},
+  year={1998},
+  publisher={World Scientific Publishing Company}
+}
+
+@article{upper2016emerging,
+  title={Emerging derivatives markets?},
+  author={Upper, Christian and Valli, Marcos},
+  year={2016}
+}
